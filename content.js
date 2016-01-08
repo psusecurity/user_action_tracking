@@ -1,7 +1,9 @@
-﻿window.addEventListener('contextmenu', function () {
+﻿window.addEventListener('contextmenu', function (event) {
     var url = window.location.href;
-    var mousePro = ["RightClilck", url];
+    var mousePro = ["RightClick2", url];
     chrome.runtime.sendMessage(mousePro);
+    eventProperty('RightClick', event);
+
 });
 
 

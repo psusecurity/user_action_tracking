@@ -4,11 +4,13 @@ const dbTable1 = "tabTable"
 const dbTable2 = "clickTable"
 const dbTable3 = "mousemoveTable"
 const dbTable4 = "dblclickTable"
+const dbTable5 = "RightClickTable"
+
 
 
 var oldURL = null;
 var onRightClic = false;
-var request = indexedDB.open(dbName, 2);
+var request = indexedDB.open(dbName, 3);
 
 request.onerror = function (event) {
     console.log("There is an error in your database");
@@ -31,6 +33,13 @@ request.onupgradeneeded = function (event) {
     /*** movment table ***/
     var objectStore = db.createObjectStore(dbTable4, { keyPath: "timeStamp" });
 
+    /*** Righ Click table **/
+
+    var objectStore = db.createObjectStore(dbTable5, { keyPath: "timeStamp" });
+
+
+
+
     /*** tables premesions ***/
     objectStore.transaction.oncomplete = function (event) {
         var customerObjectStore = db.transaction(dbTable, "readwrite").objectStore(dbTable);
@@ -38,6 +47,8 @@ request.onupgradeneeded = function (event) {
         var customerObjectStore = db.transaction(dbTable2, "readwrite").objectStore(dbTable2);
         var customerObjectStore = db.transaction(dbTable3, "readwrite").objectStore(dbTable3);
         var customerObjectStore = db.transaction(dbTable4, "readwrite").objectStore(dbTable4);
+        var customerObjectStore = db.transaction(dbTable5, "readwrite").objectStore(dbTable5);
+
     }
 };
 
@@ -119,7 +130,7 @@ request.onsuccess = function (event1) {
     chrome.runtime.onMessage.addListener(function (resonse, sender, sendResopnse) {
         var data = resonse;
         chrome.windows.getLastFocused(function (win) {
-            if (data[0] == "click" | data[0] == "dblclick") {
+            if (data[0] == "click" | data[0] == "dblclick" | data[0] == "RightClick") {
                 table = data[0].concat("Table");
                 var even = data[0];
                 var x = data[1];
@@ -142,10 +153,12 @@ request.onsuccess = function (event1) {
                 var scrY = data[6];
                 var timeStamp = data[7];
                 addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp);
-            } else if (data[0] == "RightClilck") {
+            } else if (data[0] == "RightClick2") {
+
+                /** adding the parameters to be used in navigation events**/
                 onRightClic = true;
                 oldURL = data[1];
-            } else {
+                } else {
             }
         });
     });
