@@ -1,11 +1,11 @@
-﻿window.addEventListener('contextmenu', function (event) {
+﻿var scrollPostion = 0;
+window.addEventListener('contextmenu', function (event) {
     var url = window.location.href;
     var mousePro = ["RightClick2", url];
     chrome.runtime.sendMessage(mousePro);
     eventProperty('RightClick', event);
 
 });
-
 
 // these vars and fucntion to make sure there is no douplicate of clikc when use dbclick
 var t = 0;
@@ -19,13 +19,20 @@ $(window).click(function (event) {
         }
         prevent = false;
     }, delay);
-})
-  .dblclick(function (event) {
-      clearTimeout(t);
-      prevent = true;
-      eventProperty('dblclick', event);
-  });
-
+}).scroll(function (event) {
+    var direction = null;
+    var postion = $(this).scrollTop();
+    if (postion > scrollPostion) {
+        direction ="down";
+        } else {
+        direction="up";
+    }
+    // the scroll's Postion is the highest point of the scroll. 
+    scrollPostion = postion;
+    var timeStamp = Date.now();
+    var mousePro = ["Scroll", direction, scrollPostion, timeStamp];
+    chrome.runtime.sendMessage(mousePro);
+    });
 
 window.addEventListener('mousemove', function () {
     eventProperty('mousemove', event);

@@ -5,12 +5,12 @@ const dbTable2 = "clickTable"
 const dbTable3 = "mousemoveTable"
 const dbTable4 = "dblclickTable"
 const dbTable5 = "RightClickTable"
-
+const dbTable6 = "ScrollTable"
 
 
 var oldURL = null;
 var onRightClic = false;
-var request = indexedDB.open(dbName, 3);
+var request = indexedDB.open(dbName, 4);
 
 request.onerror = function (event) {
     console.log("There is an error in your database");
@@ -34,10 +34,10 @@ request.onupgradeneeded = function (event) {
     var objectStore = db.createObjectStore(dbTable4, { keyPath: "timeStamp" });
 
     /*** Righ Click table **/
-
     var objectStore = db.createObjectStore(dbTable5, { keyPath: "timeStamp" });
 
-
+    /** Scroll Table ***/
+    var objectStore = db.createObjectStore(dbTable6, { keyPath: "timeStamp" });
 
 
     /*** tables premesions ***/
@@ -48,8 +48,8 @@ request.onupgradeneeded = function (event) {
         var customerObjectStore = db.transaction(dbTable3, "readwrite").objectStore(dbTable3);
         var customerObjectStore = db.transaction(dbTable4, "readwrite").objectStore(dbTable4);
         var customerObjectStore = db.transaction(dbTable5, "readwrite").objectStore(dbTable5);
-
-    }
+        var customerObjectStore = db.transaction(dbTable6, "readwrite").objectStore(dbTable6);
+            }
 };
 
 //**** add the data ***//
@@ -72,8 +72,8 @@ request.onsuccess = function (event1) {
     })
     chrome.windows.onFocusChanged.addListener(function (windID) {
         if (windID !== chrome.windows.WINDOW_ID_NONE) {
-                addWind("ActivWind", windID, event1, Date.now())
-            
+            addWind("ActivWind", windID, event1, Date.now())
+
         } else {
         };
     });
@@ -153,12 +153,18 @@ request.onsuccess = function (event1) {
                 var scrY = data[6];
                 var timeStamp = data[7];
                 addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp);
+            } else if (data[0] == "Scroll") {
+                table = data[0].concat("Table");
+                var direction = data[1];
+                var scrollPostion = data[2];
+                var timeStamp = data[3];
+                addScroll(table, event1, direction, scrollPostion, timeStamp);
             } else if (data[0] == "RightClick2") {
 
                 /** adding the parameters to be used in navigation events**/
                 onRightClic = true;
                 oldURL = data[1];
-                } else {
+            } else {
             }
         });
     });
@@ -264,5 +270,28 @@ function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, tim
         console.log('Error occured', ev.srcElement.error.message);
     };
 }
+
+function addScroll(table, event, direction, scrollPostion, timeStamp) {
+
+    var theData = {
+        timeStamp: timeStamp,
+        direction: direction,
+        scrollPostion: scrollPostion,
+    };
+    var idb = event.target.result;
+    var transaction = idb.transaction(table, 'readwrite').objectStore(table);
+    var request = transaction.add(theData);
+    request.onsuccess = function (ev) {
+        console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
+    };
+    request.onerror = function (ev) {
+        console.log("Error: scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion);
+
+        console.log('Error occured', ev.srcElement.error.message);
+    };
+}
+
+
+
 
 
