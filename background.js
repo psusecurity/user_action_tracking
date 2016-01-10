@@ -213,12 +213,12 @@ function getData(dbTable1, event) {
             lines = lines.concat(cursor.value.scr_width + "\t");
             lines = lines.concat(cursor.value.x_postion + "\t");
             lines = lines.concat(cursor.value.y_postion + "\t");
-            console.log(lines);
+        //    console.log(lines);
             dataString = dataString.concat(lines + "\n");
             cursor.continue();
         }
         else {
-            console.log('Entries all displayed.');
+         //   console.log('Entries all displayed.');
             download(dbTable1+'.txt', dataString);
 
         }
@@ -247,7 +247,7 @@ function getDataTab(dbTable1, event) {
             cursor.continue();
         }
         else {
-            console.log('Entries all displayed.');
+        //    console.log('Entries all displayed.');
             download('tab.txt', dataString);
                    }
     };
@@ -273,7 +273,7 @@ function getDataWind(dbTable1, event) {
             cursor.continue();
         }
         else {
-            console.log('Entries all displayed.');
+         //   console.log('Entries all displayed.');
             download('Windows.txt', dataString);
         }
     };
@@ -298,33 +298,11 @@ function getDataScroll(dbTable1, event) {
             cursor.continue();
         }
         else {
-            console.log('Entries all displayed.');
+         //   console.log('Entries all displayed.');
             download('Scroll.txt', dataString);
         }
     };
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 function addWind(action, windID, event, timeStamp) {
@@ -340,7 +318,7 @@ function addWind(action, windID, event, timeStamp) {
     var transaction = idb.transaction(dbTable, 'readwrite').objectStore(dbTable);
     var request = transaction.add(eventData);
     request.onsuccess = function (ev) {
-        console.log("WINDOW: " + action + "\t" + windID + "\t\t Time: " + eventData.timeStamp)
+       // console.log("WINDOW: " + action + "\t" + windID + "\t\t Time: " + eventData.timeStamp)
     };
     request.onerror = function (ev) {
         console.log('Error occured', ev.srcElement.error.message);
@@ -363,7 +341,7 @@ function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
     var transaction = idb.transaction(dbTable1, 'readwrite').objectStore(dbTable1);
     var request = transaction.add(eventData);
     request.onsuccess = function (ev) {
-        console.log("TAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.timeStamp + " URL: " + tabURL);
+        //console.log("TAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.timeStamp + " URL: " + tabURL);
     };
 
     request.onerror = function (ev) {
@@ -410,7 +388,7 @@ function addScroll(table, event, direction, scrollPostion, timeStamp) {
     var transaction = idb.transaction(table, 'readwrite').objectStore(table);
     var request = transaction.add(theData);
     request.onsuccess = function (ev) {
-        console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
+       // console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
     };
     request.onerror = function (ev) {
         console.log("Error: scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion);
