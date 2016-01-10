@@ -19,6 +19,10 @@ $(window).click(function (event) {
         }
         prevent = false;
     }, delay);
+}).dblclick(function (event) {
+    clearTimeout(t);
+    prevent = true;
+    eventProperty('dblclick', event);
 }).scroll(function (event) {
     var direction = null;
     var postion = $(this).scrollTop();

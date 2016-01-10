@@ -49,7 +49,7 @@ request.onupgradeneeded = function (event) {
         var customerObjectStore = db.transaction(dbTable4, "readwrite").objectStore(dbTable4);
         var customerObjectStore = db.transaction(dbTable5, "readwrite").objectStore(dbTable5);
         var customerObjectStore = db.transaction(dbTable6, "readwrite").objectStore(dbTable6);
-            }
+    }
 };
 
 //**** add the data ***//
@@ -164,6 +164,18 @@ request.onsuccess = function (event1) {
                 /** adding the parameters to be used in navigation events**/
                 onRightClic = true;
                 oldURL = data[1];
+            } else if (data[0] == "saveitnow") {
+                alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
+                getData(data[1], event1)
+            } else if (data[0] == "savetab") {
+                alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
+                getDataTab(data[1], event1)
+            } else if (data[0] == "saveWind") {
+                alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
+                getDataWind(data[1], event1)
+            } else if (data[0] == "saveScroll") {
+                alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
+                getDataScroll(data[1], event1)
             } else {
             }
         });
@@ -186,17 +198,133 @@ function getData(dbTable1, event) {
     var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
     var objectStore = transaction.objectStore(dbTable1);
 
+    var dataString = "TiemStamp\ttabID\twindID\tscrPosX\tscrPosY\tscr_high\tscr_width\tx_postion\ty_postion\n";
+    var lines = "";
+
     objectStore.openCursor().onsuccess = function (event) {
         var cursor = event.target.result;
         if (cursor) {
-            console.log('Cursor data', cursor.value);
+            lines = cursor.value.timeStamp + "\t";
+            lines = lines.concat(cursor.value.tabID + "\t");
+            lines = lines.concat(cursor.value.windID + "\t");
+            lines = lines.concat(cursor.value.scrPosX + "\t");
+            lines = lines.concat(cursor.value.scrPosY + "\t");
+            lines = lines.concat(cursor.value.scr_high + "\t");
+            lines = lines.concat(cursor.value.scr_width + "\t");
+            lines = lines.concat(cursor.value.x_postion + "\t");
+            lines = lines.concat(cursor.value.y_postion + "\t");
+            console.log(lines);
+            dataString = dataString.concat(lines + "\n");
             cursor.continue();
         }
         else {
             console.log('Entries all displayed.');
+            download(dbTable1+'.txt', dataString);
+
+        }
+
+    };
+};
+
+
+function getDataTab(dbTable1, event) {
+    idb = event.target.result;
+    var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
+    var objectStore = transaction.objectStore(dbTable1);
+
+    var dataString = "Key\tevent\ttimeStamp\ttabID\twindId\turl\n";
+    var lines = "";
+    objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+            lines = cursor.value.key + "\t";
+            lines = lines.concat(cursor.value.event + "\t");
+            lines = lines.concat(cursor.value.timeStamp + "\t");
+            lines = lines.concat(cursor.value.tabID + "\t");
+            lines = lines.concat(cursor.value.windId + "\t");
+            lines = lines.concat(cursor.value.url + "\t");
+            dataString = dataString.concat(lines + "\n");
+            cursor.continue();
+        }
+        else {
+            console.log('Entries all displayed.');
+            download('tab.txt', dataString);
+                   }
+    };
+};
+
+
+
+function getDataWind(dbTable1, event) {
+    idb = event.target.result;
+    var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
+    var objectStore = transaction.objectStore(dbTable1);
+
+    var dataString = "Key\ttimeStamp\tevent\twindId\n";
+    var lines = "";
+    objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+            lines = cursor.value.key + "\t";
+            lines = lines.concat(cursor.value.event + "\t");
+            lines = lines.concat(cursor.value.timeStamp + "\t");
+            lines = lines.concat(cursor.value.windId + "\t");
+            dataString = dataString.concat(lines + "\n");
+            cursor.continue();
+        }
+        else {
+            console.log('Entries all displayed.');
+            download('Windows.txt', dataString);
         }
     };
 };
+
+
+function getDataScroll(dbTable1, event) {
+    idb = event.target.result;
+    var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
+    var objectStore = transaction.objectStore(dbTable1);
+    var dataString = "Key\ttimeStamp\tdirection\tscrollPostion\n";
+
+    var lines = "";
+    objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+            lines = cursor.value.key + "\t";
+            lines = lines.concat(cursor.value.timeStamp + "\t");
+            lines = lines.concat(cursor.value.direction + "\t");
+            lines = lines.concat(cursor.value.scrollPostion + "\t");
+            dataString = dataString.concat(lines + "\n");
+            cursor.continue();
+        }
+        else {
+            console.log('Entries all displayed.');
+            download('Scroll.txt', dataString);
+        }
+    };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function addWind(action, windID, event, timeStamp) {
@@ -291,6 +419,33 @@ function addScroll(table, event, direction, scrollPostion, timeStamp) {
     };
 }
 
+
+
+
+
+function download(filename, text) {
+    var pom = document.createElement('a');
+    pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    pom.setAttribute('download', filename);
+
+    if (document.createEvent) {
+        var event = document.createEvent('MouseEvents');
+        event.initEvent('click', true, true);
+        pom.dispatchEvent(event);
+    }
+    else {
+        pom.click();
+    }
+}
+
+
+function AppendLine() {
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    var fh = fso.OpenTextFile("E:\\Training Asslab\\Advance\\Write to File\\Test.txt", 8, True);
+
+    fh.WriteLine("add you data");
+    fh.Close();
+}
 
 
 
