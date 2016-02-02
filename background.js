@@ -10,7 +10,8 @@ const dbTable6 = "ScrollTable"
 
 var oldURL = null;
 var onRightClic = false;
-var request = indexedDB.open(dbName, 4);
+var request = indexedDB.open(dbName, 5);
+var foreignkey = null;
 
 request.onerror = function (event) {
     console.log("There is an error in your database");
@@ -198,13 +199,14 @@ function getData(dbTable1, event) {
     var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
     var objectStore = transaction.objectStore(dbTable1);
 
-    var dataString = "TiemStamp\ttabID\twindID\tscrPosX\tscrPosY\tscr_high\tscr_width\tx_postion\ty_postion\n";
+    var dataString = "Foreignkey+\tTiemStamp\ttabID\twindID\tscrPosX\tscrPosY\tscr_high\tscr_width\tx_postion\ty_postion\n";
     var lines = "";
 
     objectStore.openCursor().onsuccess = function (event) {
         var cursor = event.target.result;
         if (cursor) {
-            lines = cursor.value.timeStamp + "\t";
+            lines = cursor.value.foreignkey + "\t";
+            lines = lines.concat(cursor.value.timeStamp + "\t");
             lines = lines.concat(cursor.value.tabID + "\t");
             lines = lines.concat(cursor.value.windID + "\t");
             lines = lines.concat(cursor.value.scrPosX + "\t");
@@ -213,13 +215,13 @@ function getData(dbTable1, event) {
             lines = lines.concat(cursor.value.scr_width + "\t");
             lines = lines.concat(cursor.value.x_postion + "\t");
             lines = lines.concat(cursor.value.y_postion + "\t");
-        //    console.log(lines);
+            //    console.log(lines);
             dataString = dataString.concat(lines + "\n");
             cursor.continue();
         }
         else {
-         //   console.log('Entries all displayed.');
-            download(dbTable1+'.txt', dataString);
+            //   console.log('Entries all displayed.');
+            download(dbTable1 + '.txt', dataString);
 
         }
 
@@ -232,12 +234,14 @@ function getDataTab(dbTable1, event) {
     var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
     var objectStore = transaction.objectStore(dbTable1);
 
-    var dataString = "Key\tevent\ttimeStamp\ttabID\twindId\turl\n";
+    var dataString = "ForeignKey\tKey\tevent\ttimeStamp\ttabID\twindId\turl\n";
     var lines = "";
     objectStore.openCursor().onsuccess = function (event) {
         var cursor = event.target.result;
         if (cursor) {
-            lines = cursor.value.key + "\t";
+      
+            lines = cursor.value.foreignkey + "\t";
+            lines = lines.concat(cursor.value.key + "\t");
             lines = lines.concat(cursor.value.event + "\t");
             lines = lines.concat(cursor.value.timeStamp + "\t");
             lines = lines.concat(cursor.value.tabID + "\t");
@@ -247,9 +251,9 @@ function getDataTab(dbTable1, event) {
             cursor.continue();
         }
         else {
-        //    console.log('Entries all displayed.');
+            //    console.log('Entries all displayed.');
             download('tab.txt', dataString);
-                   }
+        }
     };
 };
 
@@ -273,7 +277,7 @@ function getDataWind(dbTable1, event) {
             cursor.continue();
         }
         else {
-         //   console.log('Entries all displayed.');
+            //   console.log('Entries all displayed.');
             download('Windows.txt', dataString);
         }
     };
@@ -284,13 +288,13 @@ function getDataScroll(dbTable1, event) {
     idb = event.target.result;
     var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
     var objectStore = transaction.objectStore(dbTable1);
-    var dataString = "Key\ttimeStamp\tdirection\tscrollPostion\n";
+    var dataString = "Foreignkey\tKey\ttimeStamp\tdirection\tscrollPostion\n";
 
     var lines = "";
     objectStore.openCursor().onsuccess = function (event) {
         var cursor = event.target.result;
         if (cursor) {
-            lines = cursor.value.key + "\t";
+            lines = cursor.value.foreignkey + "\t";
             lines = lines.concat(cursor.value.timeStamp + "\t");
             lines = lines.concat(cursor.value.direction + "\t");
             lines = lines.concat(cursor.value.scrollPostion + "\t");
@@ -298,7 +302,7 @@ function getDataScroll(dbTable1, event) {
             cursor.continue();
         }
         else {
-         //   console.log('Entries all displayed.');
+            //   console.log('Entries all displayed.');
             download('Scroll.txt', dataString);
         }
     };
@@ -318,7 +322,7 @@ function addWind(action, windID, event, timeStamp) {
     var transaction = idb.transaction(dbTable, 'readwrite').objectStore(dbTable);
     var request = transaction.add(eventData);
     request.onsuccess = function (ev) {
-       // console.log("WINDOW: " + action + "\t" + windID + "\t\t Time: " + eventData.timeStamp)
+        // console.log("WINDOW: " + action + "\t" + windID + "\t\t Time: " + eventData.timeStamp)
     };
     request.onerror = function (ev) {
         console.log('Error occured', ev.srcElement.error.message);
@@ -327,9 +331,12 @@ function addWind(action, windID, event, timeStamp) {
 
 
 function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
-
     var hash = CryptoJS.MD5(timeStamp + action + tabID + windID + tabURL);
+    var hash1 = CryptoJS.MD5(tabID + windID + tabURL);
+    foreignkey = hash1.toString();
+
     var eventData = {
+        foreignkey: foreignkey,
         key: hash.toString(),
         timeStamp: timeStamp,
         event: action,
@@ -341,7 +348,7 @@ function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
     var transaction = idb.transaction(dbTable1, 'readwrite').objectStore(dbTable1);
     var request = transaction.add(eventData);
     request.onsuccess = function (ev) {
-        //console.log("TAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.timeStamp + " URL: " + tabURL);
+      //  console.log(foreignkey+"\tTAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.timeStamp + " URL: " + tabURL);
     };
 
     request.onerror = function (ev) {
@@ -351,8 +358,8 @@ function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
 
 //*****  add events ***/
 function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, timeStamp) {
-
     var theData = {
+        foreignkey: foreignkey,
         timeStamp: timeStamp,
         x_postion: x,
         y_postion: y,
@@ -380,6 +387,7 @@ function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, tim
 function addScroll(table, event, direction, scrollPostion, timeStamp) {
 
     var theData = {
+        foreignkey: foreignkey,
         timeStamp: timeStamp,
         direction: direction,
         scrollPostion: scrollPostion,
@@ -388,7 +396,7 @@ function addScroll(table, event, direction, scrollPostion, timeStamp) {
     var transaction = idb.transaction(table, 'readwrite').objectStore(table);
     var request = transaction.add(theData);
     request.onsuccess = function (ev) {
-       // console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
+        // console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
     };
     request.onerror = function (ev) {
         console.log("Error: scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion);
@@ -396,9 +404,6 @@ function addScroll(table, event, direction, scrollPostion, timeStamp) {
         console.log('Error occured', ev.srcElement.error.message);
     };
 }
-
-
-
 
 
 function download(filename, text) {
@@ -415,16 +420,3 @@ function download(filename, text) {
         pom.click();
     }
 }
-
-
-function AppendLine() {
-    var fso = new ActiveXObject("Scripting.FileSystemObject");
-    var fh = fso.OpenTextFile("E:\\Training Asslab\\Advance\\Write to File\\Test.txt", 8, True);
-
-    fh.WriteLine("add you data");
-    fh.Close();
-}
-
-
-
-
