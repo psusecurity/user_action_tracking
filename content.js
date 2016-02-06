@@ -1,4 +1,30 @@
-﻿var scrollPostion = 0;
+﻿
+
+/*
+I depdends on the Key Codes instead of using key identifier. 
+That will help to reduce the size of data storge
+The char codes or key codes is found here 
+http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
+
+*/
+window.addEventListener("keydown", function (event) {
+    if (event.key !== undefined) {
+    } else if (event.keyIdentifier !== undefined) {
+        var y = event.which;
+        var url = window.location.href;
+        var timeStamp = Date.now();
+        var url = window.location.href;
+        var mousePro = ["keydown", y, timeStamp, url];
+        chrome.runtime.sendMessage(mousePro);
+         console.log(event.keyIdentifier + "\t OR: " + y);
+        } 
+    if (event.defaultPrevented) {
+        return;
+    }
+}, true);
+
+
+var scrollPostion = 0;
 window.addEventListener('contextmenu', function (event) {
     var url = window.location.href;
     var mousePro = ["RightClick2", url];
@@ -34,7 +60,8 @@ $(window).click(function (event) {
     // the scroll's Postion is the highest point of the scroll. 
     scrollPostion = postion;
     var timeStamp = Date.now();
-    var mousePro = ["Scroll", direction, scrollPostion, timeStamp];
+    var url = window.location.href;
+    var mousePro = ["Scroll", direction, scrollPostion, timeStamp, url];
     chrome.runtime.sendMessage(mousePro);
     });
 
@@ -43,6 +70,7 @@ window.addEventListener('mousemove', function () {
 });
 
 function eventProperty(action, event) {
+    var url = window.location.href;
     var x = event.pageX;
     var y = event.clientY;
     var w = window.innerWidth;
@@ -50,8 +78,8 @@ function eventProperty(action, event) {
     var scrX = window.screenX;
     var scrY = window.screenY;
     var timeStamp = Date.now();
-    var mousePro = [action, x, y, w, h, scrX, scrY, timeStamp];
- //   console.log(action + "\t" + x + "\t" + y + "\t" + w + "\t" + h + "\t" + scrX + "\t" + scrY + "\t" + timeStamp)
+    var mousePro = [action, x, y, w, h, scrX, scrY, timeStamp, url];
+ //  console.log(action + "\t" + x + "\t" + y + "\t" + w + "\t" + h + "\t" + url)
     chrome.runtime.sendMessage(mousePro);
 
 }

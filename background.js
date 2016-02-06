@@ -6,11 +6,12 @@ const dbTable3 = "mousemoveTable"
 const dbTable4 = "dblclickTable"
 const dbTable5 = "RightClickTable"
 const dbTable6 = "ScrollTable"
+const dbTable7 = "keydownTable"
 
 
 var oldURL = null;
 var onRightClic = false;
-var request = indexedDB.open(dbName, 5);
+var request = indexedDB.open(dbName, 7);
 var foreignkey = null;
 
 request.onerror = function (event) {
@@ -40,6 +41,10 @@ request.onupgradeneeded = function (event) {
     /** Scroll Table ***/
     var objectStore = db.createObjectStore(dbTable6, { keyPath: "timeStamp" });
 
+    /** key event Table ***/
+    var objectStore = db.createObjectStore(dbTable7, { keyPath: "timeStamp" });
+
+
 
     /*** tables premesions ***/
     objectStore.transaction.oncomplete = function (event) {
@@ -50,6 +55,8 @@ request.onupgradeneeded = function (event) {
         var customerObjectStore = db.transaction(dbTable4, "readwrite").objectStore(dbTable4);
         var customerObjectStore = db.transaction(dbTable5, "readwrite").objectStore(dbTable5);
         var customerObjectStore = db.transaction(dbTable6, "readwrite").objectStore(dbTable6);
+        var customerObjectStore = db.transaction(dbTable7, "readwrite").objectStore(dbTable7);
+
     }
 };
 
@@ -141,8 +148,8 @@ request.onsuccess = function (event1) {
                 var scrX = data[5];
                 var scrY = data[6];
                 var timeStamp = data[7];
-                oldURL = data[8];  // to find the nviagation
-                addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp);
+                var url = data[8];
+                addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp, url);
             } else if (data[0] == "mousemove") {
                 table = data[0].concat("Table");
                 var even = data[0];
@@ -153,13 +160,24 @@ request.onsuccess = function (event1) {
                 var scrX = data[5];
                 var scrY = data[6];
                 var timeStamp = data[7];
-                addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp);
+                var url = data[8];
+                addEVENT(table, even, x, y, w, h, scrX, scrY, sender.tab.id, win.id, event1, timeStamp, url);
             } else if (data[0] == "Scroll") {
                 table = data[0].concat("Table");
                 var direction = data[1];
                 var scrollPostion = data[2];
                 var timeStamp = data[3];
-                addScroll(table, event1, direction, scrollPostion, timeStamp);
+                var url = data[4];
+                addScroll(table, event1, direction, scrollPostion, timeStamp, sender.tab.id, win.id, url);
+
+            } else if (data[0] == "keydown") {
+                table = data[0].concat("Table");
+                var keyevent = data[1];
+                var timeStamp = data[2];
+                var url = data[3];
+           //    console.log(table + "\t" + keyevent + "\t" + timeStamp + "\t" + sender.tab.id + "\t" + win.id + "\t" + url);
+               addKey(table, event1, keyevent, timeStamp, sender.tab.id, win.id, url);
+
             } else if (data[0] == "RightClick2") {
 
                 /** adding the parameters to be used in navigation events**/
@@ -177,6 +195,9 @@ request.onsuccess = function (event1) {
             } else if (data[0] == "saveScroll") {
                 alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
                 getDataScroll(data[1], event1)
+            } else if (data[0] == "saveKeyEvent") {
+                alert("Please Wait This May Take A Few Minutes (depending on the size of data) ")
+                getDataKeyEvent(data[1], event1)
             } else {
             }
         });
@@ -239,7 +260,7 @@ function getDataTab(dbTable1, event) {
     objectStore.openCursor().onsuccess = function (event) {
         var cursor = event.target.result;
         if (cursor) {
-      
+
             lines = cursor.value.foreignkey + "\t";
             lines = lines.concat(cursor.value.key + "\t");
             lines = lines.concat(cursor.value.event + "\t");
@@ -288,7 +309,7 @@ function getDataScroll(dbTable1, event) {
     idb = event.target.result;
     var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
     var objectStore = transaction.objectStore(dbTable1);
-    var dataString = "Foreignkey\tKey\ttimeStamp\tdirection\tscrollPostion\n";
+    var dataString = "Foreignkey\ttimeStamp\tdirection\tscrollPostion\n";
 
     var lines = "";
     objectStore.openCursor().onsuccess = function (event) {
@@ -307,6 +328,33 @@ function getDataScroll(dbTable1, event) {
         }
     };
 };
+
+
+
+
+function getDataKeyEvent(dbTable1, event) {
+    idb = event.target.result;
+    var transaction = idb.transaction(dbTable1, IDBTransaction.READ_ONLY);
+    var objectStore = transaction.objectStore(dbTable1);
+    var dataString = "Foreignkey\ttimeStamp\Key\n";
+
+    var lines = "";
+    objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+            lines = cursor.value.foreignkey + "\t";
+            lines = lines.concat(cursor.value.timeStamp + "\t");
+            lines = lines.concat(cursor.value.keyValue + "\t");
+            dataString = dataString.concat(lines + "\n");
+            cursor.continue();
+        }
+        else {
+            //   console.log('Entries all displayed.');
+            download('KeyEvent.txt', dataString);
+        }
+    };
+};
+
 
 
 function addWind(action, windID, event, timeStamp) {
@@ -348,7 +396,7 @@ function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
     var transaction = idb.transaction(dbTable1, 'readwrite').objectStore(dbTable1);
     var request = transaction.add(eventData);
     request.onsuccess = function (ev) {
-      //  console.log(foreignkey+"\tTAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.timeStamp + " URL: " + tabURL);
+      //  console.log(foreignkey + "\tTAB: " + action + "\t\t\t" + tabID + "\t\t\t wind: " + windID + "\t Time: " + eventData.foreignkey + " URL: " + tabURL);
     };
 
     request.onerror = function (ev) {
@@ -357,7 +405,12 @@ function addTAB(action, tabID, tabURL, windID, event, timeStamp) {
 }
 
 //*****  add events ***/
-function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, timeStamp) {
+function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, timeStamp, tabURL) {
+
+    var hash1 = CryptoJS.MD5(tabID + windID + tabURL);
+    foreignkey = hash1.toString();
+
+
     var theData = {
         foreignkey: foreignkey,
         timeStamp: timeStamp,
@@ -375,17 +428,18 @@ function addEVENT(table, even, x, y, w, h, scrX, scrY, tabID, windID, event, tim
     var transaction = idb.transaction(table, 'readwrite').objectStore(table);
     var request = transaction.add(theData);
     request.onsuccess = function (ev) {
-        // console.log("Mouse: " + even + "\t" + theData.tabID + "\t" + theData.windID + "\t\t" + x + "\t" + y + "\t" + theData.timeStamp + "\tSecHiWi" + theData.scr_high + "\tSecPos:" + theData.scr_width + "\t" + theData.scrPosX + "\t" + theData.scrPosY);
+        // console.log("Mouse: " + even + "\t" + theData.tabID + "\t" + theData.windID + "\t\t"  + theData.foreignkey);
     };
     request.onerror = function (ev) {
-        console.log("Error: " + even + "\t" + theData.tabID + "\t" + theData.windID + "\t\t" + x + "\t" + y + "\t" + theData.timeStamp + "\tSecHiWi" + theData.scr_high + "\tSecPos:" + theData.scr_width + "\t" + theData.scrPosX + "\t" + theData.scrPosY);
+        console.log("Error: " + even + "\t" + theData.tabID + "\t" + theData.windID + "\t\t" + x + "\t" + y + "\t" + theData.timeStamp + "\tSecHiWi: " + theData.scr_high + "\tSecPos:" + theData.scr_width + "\t" + theData.scrPosX + "\t" + theData.scrPosY);
 
         console.log('Error occured', ev.srcElement.error.message);
     };
 }
 
-function addScroll(table, event, direction, scrollPostion, timeStamp) {
-
+function addScroll(table, event, direction, scrollPostion, timeStamp, tabID, windID, tabURL) {
+    var hash1 = CryptoJS.MD5(tabID + windID + tabURL);
+    foreignkey = hash1.toString();
     var theData = {
         foreignkey: foreignkey,
         timeStamp: timeStamp,
@@ -396,11 +450,30 @@ function addScroll(table, event, direction, scrollPostion, timeStamp) {
     var transaction = idb.transaction(table, 'readwrite').objectStore(table);
     var request = transaction.add(theData);
     request.onsuccess = function (ev) {
-        // console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + timeStamp);
+        //console.log("Scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion + "\t" + windID + "\t" + tabID +"\t"+ foreignkey);
     };
     request.onerror = function (ev) {
         console.log("Error: scrolling " + "\t" + theData.direction + "\t" + theData.scrollPostion);
+        console.log('Error occured', ev.srcElement.error.message);
+    };
+}
 
+function addKey(table, event, keyValue, timeStamp, tabID, windID, tabURL) {
+    var hash1 = CryptoJS.MD5(tabID + windID + tabURL);
+    foreignkey = hash1.toString();
+    var theData = {
+        foreignkey: foreignkey,
+        timeStamp: timeStamp,
+        keyValue: keyValue,
+    };
+    var idb = event.target.result;
+    var transaction = idb.transaction(table, 'readwrite').objectStore(table);
+    var request = transaction.add(theData);
+    request.onsuccess = function (ev) {
+       // console.log("Adding the key : " + "\t" + theData.keyValue + "\t" + theData.foreignkey);
+    };
+    request.onerror = function (ev) {
+        console.log("Error: Adding the key " + "\t" + theData.keyValue + "\t" + theData.timeStamp);
         console.log('Error occured', ev.srcElement.error.message);
     };
 }

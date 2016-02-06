@@ -51,3 +51,9 @@ document.getElementById("ScrollTable").addEventListener("click", function () {
 
 });
 
+
+document.getElementById("keydownTable").addEventListener("click", function () {
+    var mousePro = ["saveKeyEvent", "keydownTable"];
+    chrome.runtime.sendMessage(mousePro);
+
+});
